@@ -1,4 +1,4 @@
-# util.py
+# custom_util.py
 # -------
 # Licensing Information:  You are free to use or extend these projects for
 # educational purposes provided that (1) you do not distribute or publish
@@ -202,9 +202,9 @@ class PriorityQueueWithFunction(PriorityQueue):
         PriorityQueue.push(self, item, self.priorityFunction(item))
 
 
-def manhattanDistance( xy1, xy2 ):
-    "Returns the Manhattan distance between points xy1 and xy2"
-    return abs( xy1[0] - xy2[0] ) + abs( xy1[1] - xy2[1] )
+def manhattanDistance(xy1, xy2):
+    """Returns the Manhattan distance between points xy1 and xy2"""
+    return abs(xy1[0] - xy2[0]) + abs(xy1[1] - xy2[1])
 
 """
   Data structures and functions useful for various course projects

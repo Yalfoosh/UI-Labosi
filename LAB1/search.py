@@ -19,6 +19,10 @@ Pacman agents (in searchAgents.py).
 
 import util
 import copy
+import heapq
+
+from custom_util import TraceableTree
+
 
 class SearchNode:
     """
@@ -46,7 +50,7 @@ class SearchNode:
         Check if the node has a parent.
         returns True in case it does, False otherwise
         """
-        return self.parent == None 
+        return self.parent is None
 
     def unpack(self):
         """
@@ -55,23 +59,21 @@ class SearchNode:
         """
         return self.position, self.parent, self.cost, self.heuristic
 
-
     def backtrack(self):
         """
         Reconstruct a path to the initial state from the current node.
         Bear in mind that usually you will reconstruct the path from the 
         final node to the initial.
         """
-        moves = []
+        moves = list()
         # make a deep copy to stop any referencing isues.
         node = copy.deepcopy(self)
 
-        if node.isRootNode(): 
-            # The initial state is the final state
-            return moves        
+        while not node.isRootNode():
+            moves.append(node.transition)
+            node = node.parent
 
-        "**YOUR CODE HERE**"
-        util.raiseNotDefined()
+        return moves
 
 
 class SearchProblem:
@@ -125,7 +127,8 @@ def tinyMazeSearch(problem):
     from game import Directions
     s = Directions.SOUTH
     w = Directions.WEST
-    return  [s, s, w, s, w, w, s, w]
+    return [s, s, w, s, w, w, s, w]
+
 
 def depthFirstSearch(problem):
     """
@@ -141,18 +144,119 @@ def depthFirstSearch(problem):
     print "Is the start a goal?", problem.isGoalState(problem.getStartState())
     print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # Start: (5, 5)
+    # Is the start a goal? False
+    # Start's successors: [((5, 4), 'South', 1), ((4, 5), 'West', 1)]
+    # Path found with total cost of 999999 in 0.0 seconds
+    # Search nodes expanded: 1
+
+    open_nodes = util.Stack()
+    visited_states = list()
+
+    tree = TraceableTree(state=problem.getStartState())
+    open_nodes.push(tree)
+
+    while not open_nodes.isEmpty():
+        current_node = open_nodes.pop()
+
+        if problem.isGoalState(current_node.state):
+            return current_node.get_path()
+
+        if current_node not in visited_states:
+            visited_states.append(current_node.state)
+
+            for successor in problem.getSuccessors(current_node.state):
+                if successor[0] not in visited_states:
+                    open_nodes.push(TraceableTree(state=successor[0],
+                                                  direction=successor[1],
+                                                  parent=current_node))
+
+    return list()
+
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    open_nodes = util.Queue()
+    visited_states = list()
+
+    tree = TraceableTree(state=problem.getStartState())
+    open_nodes.push(tree)
+
+    while not open_nodes.isEmpty():
+        current_node = open_nodes.pop()
+
+        if problem.isGoalState(current_node.state):
+            return current_node.get_path()
+
+        if current_node not in visited_states:
+            visited_states.append(current_node.state)
+
+            for successor in problem.getSuccessors(current_node.state):
+                if successor[0] not in visited_states and successor[0] not in map(lambda x: x.state, open_nodes.list):
+                    open_nodes.push(TraceableTree(state=successor[0],
+                                                  direction=successor[1],
+                                                  parent=current_node))
+
+    return list()
+
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    open_nodes = util.PriorityQueue()
+    visited_states = dict()
+
+    tree = TraceableTree(state=problem.getStartState(), cost=0)
+
+    open_nodes.push(tree, tree.cost)
+
+    while not open_nodes.isEmpty():
+        current_node = open_nodes.pop()
+
+        if current_node.state not in visited_states:
+            visited_states[current_node.state] = True
+
+            if problem.isGoalState(current_node.state):
+                return current_node.get_path()
+
+            for successor in problem.getSuccessors(current_node.state):
+                if successor[0] not in visited_states:
+                    temporary_node = TraceableTree(state=successor[0],
+                                                   direction=successor[1],
+                                                   cost=current_node.cost + successor[2],
+                                                   parent=current_node)
+                    open_nodes.push(temporary_node, temporary_node.cost)
+
+    return list()
+
+
+def uniform_cost_search_optimal(problem):
+    open_nodes = util.PriorityQueue()
+    visited_states = set()
+
+    starting_state = (problem.getStartState(), list(), 0)
+
+    open_nodes.push(starting_state, starting_state[2])
+
+    while not open_nodes.isEmpty():
+        current_node = open_nodes.pop()
+
+        if problem.isGoalState(current_node[0]):
+            return current_node[1]
+
+        if current_node[0] in visited_states:
+            continue
+
+        visited_states.add(current_node[0])
+
+        for successor in problem.getSuccessors(current_node[0]):
+            if successor[0] in visited_states:
+                continue
+
+            temporary_node = (successor[0], current_node[1] + [successor[1]], current_node[2] + successor[2])
+            open_nodes.push(temporary_node, temporary_node[2])
+
+    return list()
+
 
 def nullHeuristic(state, problem=None):
     """
@@ -161,10 +265,43 @@ def nullHeuristic(state, problem=None):
     """
     return 0
 
+
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    open_nodes = util.PriorityQueue()
+    open_nodes.push((problem.getStartState(), []), 0)
+
+    closed_nodes = dict()
+
+    while not open_nodes.isEmpty():
+        cost, _, (state, movement) = heapq.heappop(open_nodes.heap)
+
+        if state in closed_nodes:
+            continue
+
+        if problem.isGoalState(state):
+            return movement
+
+        closed_nodes[state] = cost
+
+        for successor_state, action, successor_cost in problem.getSuccessors(state):
+            next_node_cost = problem.getCostOfActions(movement) + successor_cost + heuristic(successor_state, problem)
+
+            if state in map(lambda x: x[2], open_nodes.heap):
+                existing_cost, _, t_state = heapq.heappop(open_nodes.heap)
+
+                if existing_cost < next_node_cost:
+                    open_nodes.push(t_state, existing_cost)
+
+            if state in closed_nodes:
+                existing_cost = closed_nodes[state]
+
+                if existing_cost > next_node_cost:
+                    closed_nodes.pop(state)
+
+            open_nodes.push((successor_state, movement + [action]), next_node_cost)
+
+    return list()
 
 
 # Abbreviations
