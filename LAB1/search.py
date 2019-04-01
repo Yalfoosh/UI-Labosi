@@ -21,8 +21,6 @@ import util
 import copy
 import heapq
 
-from custom_util import TraceableTree
-
 
 class SearchNode:
     """
