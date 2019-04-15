@@ -21,8 +21,6 @@ import util
 import copy
 import heapq
 
-from custom_util import TraceableTree
-
 
 class SearchNode:
     """
@@ -136,40 +134,25 @@ def depthFirstSearch(problem):
 
     Your search algorithm needs to return a list of actions that reaches the
     goal. Make sure to implement a graph search algorithm.
-
-    To get started, you might want to try some of these simple commands to
-    understand the search problem that is being passed in:
-
-    print "Start:", problem.getStartState()
-    print "Is the start a goal?", problem.isGoalState(problem.getStartState())
-    print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
-    # Start: (5, 5)
-    # Is the start a goal? False
-    # Start's successors: [((5, 4), 'South', 1), ((4, 5), 'West', 1)]
-    # Path found with total cost of 999999 in 0.0 seconds
-    # Search nodes expanded: 1
 
     open_nodes = util.Stack()
-    visited_states = list()
+    visited_states = set()
 
-    tree = TraceableTree(state=problem.getStartState())
-    open_nodes.push(tree)
+    open_nodes.push((problem.getStartState(), list()))
 
     while not open_nodes.isEmpty():
-        current_node = open_nodes.pop()
+        current_state, movement = open_nodes.pop()
 
-        if problem.isGoalState(current_node.state):
-            return current_node.get_path()
+        if problem.isGoalState(current_state):
+            return movement
 
-        if current_node not in visited_states:
-            visited_states.append(current_node.state)
+        if current_state not in visited_states:
+            visited_states.add(current_state)
 
-            for successor in problem.getSuccessors(current_node.state):
-                if successor[0] not in visited_states:
-                    open_nodes.push(TraceableTree(state=successor[0],
-                                                  direction=successor[1],
-                                                  parent=current_node))
+            for successor_state, action, cost in problem.getSuccessors(current_state):
+                if successor_state not in visited_states:
+                    open_nodes.push((successor_state, movement + [action]))
 
     return list()
 
@@ -177,59 +160,28 @@ def depthFirstSearch(problem):
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     open_nodes = util.Queue()
-    visited_states = list()
+    visited_states = set()
 
-    tree = TraceableTree(state=problem.getStartState())
-    open_nodes.push(tree)
+    open_nodes.push((problem.getStartState(), list()))
 
     while not open_nodes.isEmpty():
-        current_node = open_nodes.pop()
+        current_state, movement = open_nodes.pop()
 
-        if problem.isGoalState(current_node.state):
-            return current_node.get_path()
+        if problem.isGoalState(current_state):
+            return movement
 
-        if current_node not in visited_states:
-            visited_states.append(current_node.state)
+        if current_state not in visited_states:
+            visited_states.add(current_state)
 
-            for successor in problem.getSuccessors(current_node.state):
-                if successor[0] not in visited_states and successor[0] not in map(lambda x: x.state, open_nodes.list):
-                    open_nodes.push(TraceableTree(state=successor[0],
-                                                  direction=successor[1],
-                                                  parent=current_node))
+            for successor_state, action, cost in problem.getSuccessors(current_state):
+                if successor_state not in visited_states:
+                    open_nodes.push((successor_state, movement + [action]))
 
     return list()
 
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
-    open_nodes = util.PriorityQueue()
-    visited_states = dict()
-
-    tree = TraceableTree(state=problem.getStartState(), cost=0)
-
-    open_nodes.push(tree, tree.cost)
-
-    while not open_nodes.isEmpty():
-        current_node = open_nodes.pop()
-
-        if current_node.state not in visited_states:
-            visited_states[current_node.state] = True
-
-            if problem.isGoalState(current_node.state):
-                return current_node.get_path()
-
-            for successor in problem.getSuccessors(current_node.state):
-                if successor[0] not in visited_states:
-                    temporary_node = TraceableTree(state=successor[0],
-                                                   direction=successor[1],
-                                                   cost=current_node.cost + successor[2],
-                                                   parent=current_node)
-                    open_nodes.push(temporary_node, temporary_node.cost)
-
-    return list()
-
-
-def uniform_cost_search_optimal(problem):
     open_nodes = util.PriorityQueue()
     visited_states = set()
 
@@ -238,22 +190,18 @@ def uniform_cost_search_optimal(problem):
     open_nodes.push(starting_state, starting_state[2])
 
     while not open_nodes.isEmpty():
-        current_node = open_nodes.pop()
+        current_state, movement, current_cost = open_nodes.pop()
 
-        if problem.isGoalState(current_node[0]):
-            return current_node[1]
+        if problem.isGoalState(current_state):
+            return movement
 
-        if current_node[0] in visited_states:
-            continue
+        if current_state not in visited_states:
+            visited_states.add(current_state)
 
-        visited_states.add(current_node[0])
-
-        for successor in problem.getSuccessors(current_node[0]):
-            if successor[0] in visited_states:
-                continue
-
-            temporary_node = (successor[0], current_node[1] + [successor[1]], current_node[2] + successor[2])
-            open_nodes.push(temporary_node, temporary_node[2])
+            for successor_state, action, cost in problem.getSuccessors(current_state):
+                if successor_state not in visited_states:
+                    temporary_node = (successor_state, movement + [action], current_cost + cost)
+                    open_nodes.push(temporary_node, temporary_node[2])
 
     return list()
 

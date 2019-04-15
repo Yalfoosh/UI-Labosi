@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 python pacman.py -l miniWumpus -g WumpusGhost
+=======
+python pacman.py -l miniWumpus -g WumpusGhost
+>>>>>>> a7864f4f0432072d9667b4fb2060efc8d8dcc6ae
 
 
 python pacman.py -l miniWumpus -p PacardAgent -a fn=miniWumpusSearch -g WumpusGhost

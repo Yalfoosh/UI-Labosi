@@ -525,27 +525,8 @@ class ClosestDotSearchAgent(SearchAgent):
         Returns a path (a list of actions) to the closest dot, starting from
         gameState.
         """
-        # Here are some useful elements of the startState
-        startPosition = gameState.getPacmanPosition()
-        food = gameState.getFood()
-        walls = gameState.getWalls()
-        problem = AnyFoodSearchProblem(gameState)
 
-        shortest_path = None
-        minimum = 3999999999
-
-        for food_coordinates in food.asList():
-            path = search.ucs(PositionSearchProblem(gameState=gameState,
-                                                    start=startPosition,
-                                                    goal=food_coordinates,
-                                                    warn=False,
-                                                    visualize=False))
-
-            if len(path) < minimum:
-                minimum = len(path)
-                shortest_path = path
-
-        return shortest_path
+        return search.ucs(AnyFoodSearchProblem(gameState))
 
 
 class AnyFoodSearchProblem(PositionSearchProblem):
@@ -579,15 +560,12 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         The state is Pacman's position. Fill this in with a goal test that will
         complete the problem definition.
         """
-        x,y = state
-
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self.food[state[0]][state[1]]
 
 
 def maze_distance(point1, point2, game_state):
-    return len(search.uniform_cost_search_optimal(PositionSearchProblem(gameState=game_state,
-                                                                        start=point1,
-                                                                        goal=point2,
-                                                                        warn=False,
-                                                                        visualize=False)))
+    return len(search.ucs(PositionSearchProblem(gameState=game_state,
+                                                start=point1,
+                                                goal=point2,
+                                                warn=False,
+                                                visualize=False)))
